@@ -1,37 +1,33 @@
 \section{A treap-based associative hash function}
 \label{s:treap}
 
-\paragraph{Why a randomized data-structure?}
+A treap is a randomized balanced binary (search) tree. A treap satisfies two
+properties.  First, it is an ordered tree, where the in-order traversal of the
+nodes with their values corresponds to the original order of the values in the
+tree. Second, it assigns a priority to each node and satisfies the heap
+property that each node has a higher priority than its children (breaking ties
+by order of values).
 
-Our core design conists of three steps: First, a sequence $s$ is converted in a
-tree $T_s$. This tree must be the same no matter how it is constructed; hashing
-it from $s$, or by hashing the beginning and end of $s$, and concatenating the
-trees. As a strawman, this section will consider a treap-based hash function.
+Normally each treap node is given a random priority, and that ensures that the
+treap is balanced. However, a treap is naturally transformed into a
+history-independent data-structure by assigning each node a priority derived
+from a pseudo-random function $f$ that maps node values $a_i$ to priorities
+$p_i = f(a_i)$. This derandomized treap is history-independent because the two
+treap properties combined completely constrain the shape of the tree; in other
+words, any two treaps that satisfy both properties must have the same shape. In
+our context this is great, as it means the two trees will have the same root
+Merkle hash!
 
-To build a treap over a sequence $s = a_1 a_2 \cdots a_n$, we associate a
-random priority $\prf(a_i)$ with every node. The node with highest priority
-will be placed at the top of tree, breaking ties by index in $s$. This treap
-always has the same shape for the same sequence as long as the same $\prf$ is
-used. 
-
-To calculate the hash of a treap, we recursively calculate a hash of the tree
-nodes by concatenating the hashes of the previous elements, and feeding those
-into a cryptographic hash function. For this hash to be meaningful, it must be
-the same for all ways of constructing the tree. This is the history independence
-property that a treap gives us by relying on priorities.
-
-For some use-cases, the treap is a balanced tree -- namely, if $\prf$ behaves
-randomly.  That is the case of the alphabet $\Sigma = \{0,1\}^k$ is large and
-no two elements in the sequence have the same value. In other scenarios, the
-treap might be very unbalanced.  For example, if $a_1 = a_2 = \ldots = a_n$ the
-treap will degenerate into a tree of depth $n$, or a linked-list. This is the
-problem that we will address with SeqHash. For the rest of this section we will
-assume that the treap has a balanced shape.
-
-To concatenate the hash of two sequences $a$ and $b$, we merge their
-corresponding trees. The treap merge algorithm is simple: the root node
-of the merged tree is the root node is the root node of $a$ or $b$ with higher
-priority, and the rest of the tree is merged recursively:
+To use the treap as an associative hash function, we need to extract a fringe $F_s$
+from a treap $T_s$ that still supports efficient merging. To understand what a
+fringe $F_s$ should look like, we will consider the algorithm that merges two
+trees $T_a$ and $T_b$. Intuitively, the root node of the merged tree $T_{a||b}$
+must be either the root node of $T_a$, or the root node of $T_b$, as one of those
+must have the highest priority in all of $a||b$. The node to the left of $T_a$'s
+root node will keep their structure, as none of their priorities or values will change.
+Similarly, the nodes to the right of $T_b$'s root node keep their place. Only
+the node in between the root nodes might change. This is handled by the merge function
+recursively merging two trees:
 
 \input{code/treap-merge.py}
 
@@ -40,17 +36,40 @@ the treaps are balanced, merging two treaps take time $O(\log |a| + \log |b|)$.
 More importantly, merging two treaps only requires access to a small part of
 the original trees. 
 
-When merging two trees, we only ever access the right child of $a$, and only
-ever access the left child of $b$. To support any kind of merging, we only need
-to store the nodes on the outside of the tree: Nodes that can be reached either
-by only going left, or by only going right from the root of the tree. We call
-these nodes the \emph{fringe} of the tree.  The size of the fringe is
+To construct a fringe, we will store only the nodes that could be accessed by
+the merge algorithm. Luckily, there are not many of those nodes.  When merging
+two trees, we only ever access the right child of $a$, and only ever access the
+left child of $b$. To support any kind of merging, we only need to store the
+nodes on the outside of the tree: Nodes that can be reached either by only
+going left, or by only going right from the root of the tree. We call these
+nodes the fringe of the tree.  The size of the fringe $F_s$ is
 proportional is at most twice the height of the tree, or $O(\log |s|)$ for
 sequences $s$ with balanced trees.
 
-\input{code/treap-extract.py}
+%\input{code/treap-extract.py}
 
-After merging, most nodes in the tree remain the same, and so their hashes
-remain the same. This means we can re-compute the hashes of the changed nodes
-in time $O(\log |a| + \log |b|)$, because the hashes of all the other nodes
-haven't changed.
+%After merging, most nodes in the tree remain the same, and so their hashes
+%remain the same. This means we can re-compute the hashes of the changed nodes
+%in time $O(\log |a| + \log |b|)$, because the hashes of all the other nodes
+%haven't changed.
+
+For some use-cases, the treap is a balanced tree -- namely, if $f$ behaves
+randomly for every element. That is the case when the alphabet $\Sigma =
+\{0,1\}^k$ is large and no two elements in the sequence have the same value.
+That is likely, for example, when hashing sequences of SHA512 values that each
+contain a unique timestamp. In other scenarios, the treap might be very
+unbalanced.  For example, if $a_1 = a_2 = \ldots = a_n$ the treap will
+degenerate into a tree of depth $n$, or a linked-list. This is the problem that
+we will address by using SeqHash in \S\ref{s:seqhash}.
+
+\paragraph{An aside: A handwavy argument as to why we need randomness for
+history-independent balanced binary trees.} I believe that we need
+pseudo-random functions to construct performant balanced binary trees that
+support efficient merging. Why? Well, we must somehow pick a node in the tree
+to be the root node. Picking the root node according to index is going to be
+problematic, as prepending a new value changes all other value's indices.
+Picking the root node according to value (say, maximum) is tricky as well, as
+values might very well exhibit patterns that lead to an unbalanced tree; for
+example, they might be linearly increasing.  Somehow, we need to pick a
+``nicely average'' node to be the root, and it seems that the ideal way to
+determine that is by appealing to a (pseudo-)random oracle.

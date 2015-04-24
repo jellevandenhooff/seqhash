@@ -3,7 +3,7 @@
 
 \begin{figure}[htb]
 \begin{center}
-\begin{tikzcd}[row sep=small, column sep=large]
+\begin{tikzcd}[row sep=normal, column sep=large]
   a \arrow[dd, bend right=50, "\hash"'] \arrow[d] \arrow[r, phantom, "||"] & b \arrow[r] \arrow[d] & \arrow[d] a||b \\
   T_a \arrow[d] \arrow[r, phantom, "\text{merge}"] & T_b \arrow[r] \arrow[d] & \arrow[d] T_{a||b} \\
   F_a \arrow[r, phantom, "\cat"] & F_b \arrow[r] & F_{a||b}
@@ -16,7 +16,7 @@
 The problem we focus on in this paper is on how to compute a hash (or
 fingerprint) over arbitrary input sequences, supporting efficient merging of
 hashes. Formally, our inputs are sequences $\Sigma^*$ consisting of symbols
-from the alphabet $\Sigma = \{0,1\}^k$. 
+from the alphabet $\Sigma = \{0,1\}^k$. When hashing byte strings, $k=8$; when hashing sequences of SHA512 hashes, $k=512$.
 
 Our basic building block will be an efficient implementation of a
 history-independent balanced binary tree that takes an input $s$ and builds a
