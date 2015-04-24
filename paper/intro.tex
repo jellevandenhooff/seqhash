@@ -1,3 +1,65 @@
 \section{Introduction}
 
-SeqHash is a cool thing. Alright.
+This paper describes an associative hash function built on top of
+SeqHash~\cite{versum:ccs14}, a history-independent balanced tree. Using our
+associative hash function, we can efficiently compute the hash of a
+concatenation of two sequences $a$ and $b$ from their own hashes in time
+$O(\log n + \log m)$.\footnote{Like all bounds in this paper, this runtime
+bound holds with high probability.} Our hash function is useful for
+fingerprinting and is collision-resistant.
+
+Hash functions are frequently used to summarize and authenticate data. While
+powerful, existing cryptographic hash functions are not associative. Imagine
+creating an archive file consisting of several large input files. With an
+associative hash function, the hash of the overall archive could be computed by
+combining the hashes of the input files. Yet right now, we can not do so, and
+computing the SHA512 hash of the concatenation of two large files requires
+reprocessing both files, giving an $O(n + m)$ merge time.
+
+The hash function in this paper uses a Merkle
+tree~\cite{merkle:sig-conventional} to compute a hash over a sequence of input
+values. A Merkle hash tree computes a hash for each node in a tree by computing
+a cryptographic hash over the hashes of the node's children. Tree-based hashes
+are appealing because they do not require any new cryptographic assumptions; as
+long as the underlying SHA512 hash is secure, the tree-based hash is secure. 
+
+Hash functions should be deterministic, and this is a challenge for a
+tree-based design. To use a hash tree as the basis of an associative hash
+function, the tree must have the same shape and internal structure for the same
+input sequence, no matter how the tree was built. Yet most balanced trees can
+take wildly different shapes depending on how they are constructed. For
+example, constructing a red-black tree by appending leafs from left-to-right
+leads to a different shape than appending the same leafs from right-to-left!
+For our hash function to be deterministic, the tree must always have the same
+shape.  This requirement is formalized in the notion of
+history-independence~\cite{naor:hids}. The challenge this paper focuses on
+using a history-independent tree as an associative hash function. 
+
+By reframing the problem of building a hash function into a problem of building
+and manipulating trees, we transform a cryptography problem into a
+datastructures problem. We outline our approach in \S\ref{s:overview}.  To
+start out, we transform a treap into an associative hash function in
+\S\ref{s:treap}. However, in our setting, a treap is not guaranteed to be
+balanced. To improve our design, we use the history-independent balanced tree
+SeqHash~\cite{versum:ccs14} in \S\ref{s:seqhash}. We suggest several
+improvements to SeqHash used as an associative hash function in
+\S\ref{s:improvements}. Finally, we evaluate the performance of both the treap
+and SeqHash-based hash functions in \S\ref{s:eval}.
+
+\paragraph{Statement of work.} This paper builds on previous work~\cite{versum:ccs14} that uses SeqHash as an
+authenticated data-structure for holding sequences. I had a rough idea of using
+SeqHash as a hash function before the start of 6.856. However, all work shown
+in this paper was performed in the context (and after the start of) 6.856.
+Notably, the description of SeqHash in \S\ref{s:seqhash} was written from
+scratch with the specific goal to provide greater clarity than the original
+description, and I came up with the improvements to SeqHash during the course
+of the project.
+
+%This paper extends the
+%prior work on SeqHash in the followings ways as 6.856 final project: We provide
+%a clear explanation of the design and motivation for the SeqHash tree. We build
+%an associative hash function using the SeqHash tree. We compare the behavior of
+%SeqHash with another history-independent data structure. We suggest and
+%evaluate improvements to the construction of SeqHash. We analyze the runtime of
+%SeqHash in theory and in practice on various input datasets. All this work was
+%performed in the context of 6.856.

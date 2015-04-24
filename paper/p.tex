@@ -1,4 +1,4 @@
-\documentclass[10pt,letterpaper]{article}
+\documentclass[10pt,letterpaper]{artikel3}
 
 \PassOptionsToPackage{hyphens}{url}
 \usepackage[letterpaper,breaklinks,colorlinks]{hyperref}
@@ -11,8 +11,11 @@
 \usepackage{aliascnt}
 \usepackage{comment}
 \usepackage{booktabs}
-\usepackage{tikz}
-\usetikzlibrary{shapes,arrows,automata}
+%\usepackage{tikz}
+%\usetikzlibrary{shapes,arrows,automata}
+%\usetikzlibrary{cd}
+\usepackage{tikz-cd}
+
 \usepackage{underscore}
 \usepackage[T1]{fontenc}
 \usepackage{relsize}
@@ -22,14 +25,24 @@
 \usepackage{subfigure}
 \usepackage{flushend}
 
+\input{code/fmt}
 \input{cmds}
 
 \begin{document}
 
-\title{6.856 Final Project: Implementing and Comparing SeqHash}
+\title{Constructing an associative hash function}
 \author{Jelle van den Hooff}
+\date{\vspace{-2ex}}
 \maketitle
 
 \input{intro}
+\input{overview}
+\input{hashtree}
+\input{seqhash}
+\input{optimizing}
+\input{eval}
+
+\bibliographystyle{abbrvnat}
+\bibliography{n-str,local,n,n-conf}
 
 \end{document}

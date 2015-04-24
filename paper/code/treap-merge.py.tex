@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\},numbers=left,firstnumber=1,stepnumber=1,codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PY{k}{def} \PY{n+nf}{treap\PYZus{}merge}\PY{p}{(}\PY{n}{a}\PY{p}{,} \PY{n}{b}\PY{p}{)}\PY{p}{:}
+    \PY{k}{if} \PY{n}{a} \PY{o}{==} \PY{n+nb+bp}{None} \PY{o+ow}{or} \PY{n}{b} \PY{o}{==} \PY{n+nb+bp}{None}\PY{p}{:}
+        \PY{k}{return} \PY{n}{a} \PY{o+ow}{or} \PY{n}{b}
+    \PY{k}{if} \PY{n}{a}\PY{o}{.}\PY{n}{priority} \PY{o}{\PYZgt{}} \PY{n}{b}\PY{o}{.}\PY{n}{priority}\PY{p}{:}
+        \PY{k}{return} \PY{n}{a}\PY{o}{.}\PY{n}{update}\PY{p}{(}\PY{n}{right}\PY{o}{=}\PY{n}{treap\PYZus{}merge}\PY{p}{(}\PY{n}{a}\PY{o}{.}\PY{n}{right}\PY{p}{,} \PY{n}{b}\PY{p}{)}\PY{p}{)}
+    \PY{k}{else}\PY{p}{:}
+        \PY{k}{return} \PY{n}{b}\PY{o}{.}\PY{n}{update}\PY{p}{(}\PY{n}{left}\PY{o}{=}\PY{n}{treap\PYZus{}merge}\PY{p}{(}\PY{n}{a}\PY{p}{,} \PY{n}{b}\PY{o}{.}\PY{n}{left}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}

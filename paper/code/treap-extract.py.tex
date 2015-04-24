@@ -1,0 +1,14 @@
+\begin{Verbatim}[commandchars=\\\{\},numbers=left,firstnumber=1,stepnumber=1,codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PY{k}{def} \PY{n+nf}{extract\PYZus{}fringe}\PY{p}{(}\PY{n}{node}\PY{p}{,} \PY{n}{side}\PY{p}{)}\PY{p}{:}
+    \PY{k}{if} \PY{n}{node} \PY{o}{==} \PY{n+nb+bp}{None}\PY{p}{:}
+        \PY{k}{return} \PY{n+nb+bp}{None}
+    \PY{k}{if} \PY{n}{side} \PY{o}{==} \PY{l+s}{\PYZsq{}}\PY{l+s}{left}\PY{l+s}{\PYZsq{}}\PY{p}{:}
+        \PY{k}{return} \PY{n}{node}\PY{o}{.}\PY{n}{update}\PY{p}{(}\PY{n}{left}\PY{o}{=}\PY{n}{extract\PYZus{}fringe}\PY{p}{(}\PY{n}{node}\PY{o}{.}\PY{n}{left}\PY{p}{,} \PY{l+s}{\PYZsq{}}\PY{l+s}{left}\PY{l+s}{\PYZsq{}}\PY{p}{)}\PY{p}{,} 
+                           \PY{n}{right}\PY{o}{=}\PY{n+nb}{hash}\PY{p}{(}\PY{n}{node}\PY{o}{.}\PY{n}{right}\PY{p}{)}\PY{p}{)}\PY{o}{.}
+    \PY{k}{elif} \PY{n}{side} \PY{o}{==} \PY{l+s}{\PYZsq{}}\PY{l+s}{right}\PY{l+s}{\PYZsq{}}\PY{p}{:}
+        \PY{k}{return} \PY{n}{node}\PY{o}{.}\PY{n}{update}\PY{p}{(}\PY{n}{left}\PY{o}{=}\PY{n+nb}{hash}\PY{p}{(}\PY{n}{node}\PY{o}{.}\PY{n}{left}\PY{p}{)}\PY{p}{,}
+                           \PY{n}{right}\PY{o}{=}\PY{n}{extract\PYZus{}fringe}\PY{p}{(}\PY{n}{node}\PY{o}{.}\PY{n}{right}\PY{p}{,} \PY{l+s}{\PYZsq{}}\PY{l+s}{right}\PY{l+s}{\PYZsq{}}\PY{p}{)}\PY{p}{)}
+    \PY{k}{else}\PY{p}{:} \PY{c}{\PYZsh{} root}
+        \PY{k}{return} \PY{n}{node}\PY{o}{.}\PY{n}{update}\PY{p}{(}\PY{n}{left}\PY{o}{=}\PY{n}{extract\PYZus{}fringe}\PY{p}{(}\PY{n}{node}\PY{o}{.}\PY{n}{left}\PY{p}{,} \PY{l+s}{\PYZsq{}}\PY{l+s}{left}\PY{l+s}{\PYZsq{}}\PY{p}{)}\PY{p}{,}
+                           \PY{n}{right}\PY{o}{=}\PY{n}{extract\PYZus{}fringe}\PY{p}{(}\PY{n}{node}\PY{o}{.}\PY{n}{right}\PY{p}{,} \PY{l+s}{\PYZsq{}}\PY{l+s}{right}\PY{l+s}{\PYZsq{}}\PY{p}{)}\PY{p}{)}
+\end{Verbatim}

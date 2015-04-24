@@ -1,5 +1,18 @@
-all:
+all: code/fmt.tex codes
 	./bin/latexrun p.tex
+
+code/%.tex: code/src/%
+	pygmentize -O linenos -P tabsize=4 -P mathescape -f latex $< > $@
+
+codes: $(patsubst code/src/%, code/%.tex, $(wildcard code/src/*))
+
+code/fmt.tex:
+	pygmentize -f latex -S friendly \
+                | grep -vw 'PY@tok@m' \
+                | grep -vw 'PY@tok@mi' \
+                | grep -vw 'PY@tok@o' \
+                > $@~
+	mv $@~ $@
 
 clean:
 	./bin/latexrun --clean-all p.tex

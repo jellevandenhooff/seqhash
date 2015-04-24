@@ -1,0 +1,60 @@
+\section{From history-independent tree to associative hash function}
+\label{s:overview}
+
+\begin{figure}[htb]
+\begin{center}
+\begin{tikzcd}[row sep=small, column sep=large]
+  a \arrow[dd, bend right=50, "\hash"'] \arrow[d] \arrow[r, phantom, "||"] & b \arrow[r] \arrow[d] & \arrow[d] a||b \\
+  T_a \arrow[d] \arrow[r, phantom, "\text{merge}"] & T_b \arrow[r] \arrow[d] & \arrow[d] T_{a||b} \\
+  F_a \arrow[r, phantom, "\cat"] & F_b \arrow[r] & F_{a||b}
+\end{tikzcd}
+\end{center}
+\caption{A diagram showing the relationship between $\hash$, $\cat$, $F$, and $T$. The sequence $s$ has corresponding tree $T_s$ with fringe $F_s$. We can compute $F_s$ using $\hash(s) = F_s$. Two sequences $a$ and $b$ can be concatenated to obtain $a||b$. Using $\cat$, we can compute $F_{a||b}$ using $\cat(F_a, F_b) = F_{a||b}$.}
+\label{fig:diagram}
+\end{figure}
+
+The problem we focus on in this paper is on how to compute a hash (or
+fingerprint) over arbitrary input sequences, supporting efficient merging of
+hashes. Formally, our inputs are sequences $\Sigma^*$ consisting of symbols
+from the alphabet $\Sigma = \{0,1\}^k$. 
+
+Our basic building block will be an efficient implementation of a
+history-independent balanced binary tree that takes an input $s$ and builds a
+balanced tree $T_s$ of height $O(\log |s|)$. This tree must support efficient
+merging, so that we can merge trees $T_a$ and $T_b$ into $T_{a||b}$
+corresponding to the concatenation $a||b$ in time $O(\log |a| + \log |b|)$.
+
+Using the tree as a basic building block, we can compute a Merkle-style hash of
+the tree by recursively hashing nodes. The hash of each node is a cryptographic
+hash of the hashes of its children, and the hash of the tree is the hash of the
+root node.
+
+This hash itself is not suitable as an associative hash. While we can easily
+distribute the small hash of the root of $T_s$, we cannot easily pass around
+$T_s$ itself since the tree contains $O(|s|)$ leafs.  Yet we need to know the
+structure of $T_a$ and $T_b$ to compute $T_{a||b}$, and that is lost when
+looking at just the hashes of the roots of the trees.
+
+Instead, our construction relies on the existence of a small representation
+$F_s$ of the \emph{fringe} of a tree $T_s$ such that we can still compute the
+concatenation $F_{a||b}$ of $F_a$ and $F_b$ without access to either $T_a$ or
+$T_b$. We show that such a fringe exists for both the treap in \S\ref{s:treap}
+and for SeqHash in \S\ref{s:seqhash}.
+
+Our final construction in both cases consists of two functions, $\hash$ and
+$\cat$. The function $\hash$ computes the fringe $F_s$ from $s$, and $\cat$
+computes $F_{a||b}$ from $F_a$ and $F_b$ as shown in~Figure~\ref{fig:diagram}.
+The fringe $F_s$ has size $O(\log |s|)$ and can be computed in time $O(n)$. The
+$\cat$ function has runtime $O(\log |a| + \log |b|)$.
+
+%As an external building block, SeqHash rely on an external cryptographic
+%pseudorandom function $\prf$ that maps inputs in $\{0,1\}^*$ to an infinite
+%sequence of random output bits. This source of randomness is used to determine
+%the shape of the tree no matter what the input looks like. For a hash function to be widely useful as a summary function, anyone must be
+%able to compute it -- and consequently, we cannot assume that our choice of pseudorandom
+%function remains secret (as in a PRF). Instead, SeqHash
+
+%hide the key to the pseudorandom function to hide the behavior of our tree from
+%an adversary.
+
+%XXX An argument as to why associative hash functions need randomization.
