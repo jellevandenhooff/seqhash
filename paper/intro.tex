@@ -1,62 +1,78 @@
 \section{Introduction}
 
-This paper describes an associative hash function built on top of
-SeqHash~\cite{versum:ccs14}, a history-independent balanced tree. Using our
-associative hash function, we can efficiently compute the hash of a
-concatenation of two sequences $a$ and $b$ from their own hashes in time
-$O(\log n + \log m)$.\footnote{Like all bounds in this paper, this runtime
-bound holds with high probability.} Our hash function is useful for
-fingerprinting and is collision-resistant.
+This paper describes two associative hash functions, one built on top of a
+derandomized treap, and one built on top of the SeqHash~\cite{versum:ccs14}
+history-independent balanced tree. Using these associative hash functions, we
+can efficiently combine two hashes $\hash(a)$ and $\hash(b)$ to obtain
+$\hash(a||b)$ using a merge function $\cat(\hash(a), \hash(b)) = \hash(a||b)$
+in time $O(\log |a| + \log |b|)$. \footnote{Like all bounds in this paper, this
+runtime bound holds with high probability.} Runtime increases because our hash
+functions grow, with $|\hash(s)| = O(\log |s|)$. Our hash function is useful
+for fingerprinting and is collision-resistant.
 
 Hash functions are frequently used to summarize and authenticate data. While
 powerful, existing cryptographic hash functions are not associative. Imagine
-creating an archive file consisting of several large input files. With an
-associative hash function, the hash of the overall archive could be computed by
-combining the hashes of the input files. Yet right now, we can not do so, and
-computing the SHA512 hash of the concatenation of two large files requires
-reprocessing both files, giving an $O(n + m)$ merge time.
+creating an archive file consisting of several large input files. Using,
+for example, SHA512, to compute a hash of the concatenation of two input files 
+$a$ and $b$ takes linear time $O(|b|)$. Using our associative hash functions,
+computing the final hash from two existing hashes would instead take time
+$O(\log |a| + \log |b|)$.
 
-The hash function in this paper uses a Merkle
-tree~\cite{merkle:sig-conventional} to compute a hash over a sequence of input
-values. A Merkle hash tree computes a hash for each node in a tree by computing
+Our associative hash functions are based on Merkle hash
+trees~\cite{merkle:sig-conventional}. To hash a sequence of values, we build a
+tree over those values, and recursively compute a Merkle hash for the tree's
+root.  A Merkle hash tree computes a hash for each node in a tree by computing
 a cryptographic hash over the hashes of the node's children. Tree-based hashes
 are appealing because they do not require any new cryptographic assumptions; as
-long as the underlying SHA512 hash is secure, the tree-based hash is secure.
-This is an important property! One alternative, the Rabin-Karp rolling hash is
-not cryptographically strong (and finding collisions is trivial). Another
-alternative, the Tillich-Zemor hash function based on matrices has been shown
-to exhibit collisions as well. % https://eprint.iacr.org/2009/376.pdf
+long as the underlying cryptographic hash is secure, the tree-based hash is
+secure.  This is an important property! One alternative, the Rabin-Karp rolling
+hash is not cryptographically strong (and finding collisions is trivial).
+Another alternative, the Tillich-Zemor hash function based on matrices has been
+shown to exhibit collisions as well. % https://eprint.iacr.org/2009/376.pdf
 
-Hash functions should be deterministic, and this is a challenge for a
-tree-based design. To use a hash tree as the basis of an associative hash
-function, the tree must have the same shape and internal structure for the same
-input sequence, no matter how the tree was built. Yet most balanced trees can
-take wildly different shapes depending on how they are constructed. For
-example, constructing a red-black tree by appending leafs from left-to-right
-leads to a different shape than appending the same leafs from right-to-left!
-For our hash function to be deterministic, the tree must always have the same
-shape.  This requirement is formalized in the notion of
-history-independence~\cite{naor:hids}. The challenge this paper focuses on is
-using a history-independent tree as an associative hash function. 
+\begin{figure}[htb]
+\begin{center}
+\begin{tikzpicture}
+\Tree [ .2 1 [ .3 4 ] ]
+\end{tikzpicture}
+%
+\begin{tikzpicture}
+\Tree [ .3 [ .2 1 ] 4 ]
+\end{tikzpicture}
+\end{center}
+\caption{Two red-black trees storing the same data inserted either from left-to-right (left tree) or from right-to-left (right tree). Because the trees have different shape, the Merkle hashes of the two trees are different and not useful for fingerprinting.}
+\label{fig:redblack}
+\end{figure}
 
-By reframing the problem of building a hash function into a problem of building
-and manipulating trees, we transform a cryptography problem into a
-datastructures problem. We outline our approach in \S\ref{s:overview}.  To
-start out, we transform a treap into an associative hash function in
-\S\ref{s:treap}. However, in our setting, a treap is not guaranteed to be
-balanced. To improve our design, we use the history-independent balanced tree
-SeqHash~\cite{versum:ccs14} in \S\ref{s:seqhash}. % We suggest several
-% improvements to SeqHash used as an associative hash function in
-% \S\ref{s:improvements}.
-Finally, we evaluate the performance of both the treap
-and SeqHash-based hash functions in \S\ref{s:eval}.
+No associative hash functions have yet been built using Merkle hashes because
+only few underlying trees can be used. To use a hash tree as the basis of an
+associative hash function, the tree must have the same shape and internal
+structure for the same input sequence, no matter how the tree was built. Yet
+most balanced trees can take wildly different shapes depending on how they are
+constructed. For example, constructing a red-black tree by appending leafs from
+left-to-right leads to a different shape than appending the same leafs from
+right-to-left as seen in Figure~\ref{fig:redblack}. For a hash function to be deterministic, the tree must always
+have the same shape. This requirement is formalized in the notion of
+history-independence~\cite{naor:hids}. 
+
+The challenge this paper focuses on is picking and using a history-independent
+tree as an associative hash function.  By reframing the problem of building a
+hash function into a problem of building and manipulating trees, we transform a
+cryptography problem into a datastructures problem. We outline our approach in
+\S\ref{s:overview}.  To start out, we transform a treap into an associative
+hash function in \S\ref{s:treap}. However, in our setting, a treap is not
+guaranteed to be balanced. To improve our design, we use the
+history-independent balanced tree SeqHash. We describe SeqHash in
+\S\ref{s:background}, and cover our final construction in \S\ref{s:seqhash}.
+Finally, we evaluate the performance of both the treap and SeqHash-based hash
+functions in \S\ref{s:eval}.
 
 \paragraph{Statement of work.} This paper builds on VerSum~\cite{versum:ccs14},
 a system in which a server stores a full SeqHash tree as an authenticated
 data-structure. While I had a rough idea of building an associative hash
 function on top of the SeqHash tree before the class started, all work shown in
 this paper was performed in the context and after the start of 6.856. The
-description of SeqHash in \S\ref{s:seqhash} was written from scratch with the
+description of SeqHash in \S\ref{s:background} was written from scratch with the
 specific goal to provide greater clarity than the original description.
  % , and I came up with the improvements to SeqHash during the course
 %of the project.
@@ -67,5 +83,6 @@ specific goal to provide greater clarity than the original description.
 %an associative hash function using the SeqHash tree. We compare the behavior of
 %SeqHash with another history-independent data structure. We suggest and
 %evaluate improvements to the construction of SeqHash. We analyze the runtime of
+
 %SeqHash in theory and in practice on various input datasets. All this work was
 %performed in the context of 6.856.

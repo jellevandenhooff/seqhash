@@ -27,9 +27,13 @@ must have the highest priority in all of $a||b$. The node to the left of $T_a$'s
 root node will keep their structure, as none of their priorities or values will change.
 Similarly, the nodes to the right of $T_b$'s root node keep their place. Only
 the node in between the root nodes might change. This is handled by the merge function
-recursively merging two trees:
+recursively merging two trees as seen in Figure~\ref{fig:treap-merge}
 
+\begin{figure}
 \input{code/treap-merge.py}
+\caption{The treap merge algorithm for computing $T_{a||b}$ from $T_a$ and $T_b$. The update function returns a new node with the given field updated to the new value.}
+\label{fig:treap-merge}
+\end{figure}
 
 This treap merge routine is efficient as it only descends into one node. If
 the treaps are balanced, merging two treaps take time $O(\log |a| + \log |b|)$.
@@ -60,16 +64,16 @@ That is likely, for example, when hashing sequences of SHA512 values that each
 contain a unique timestamp. In other scenarios, the treap might be very
 unbalanced.  For example, if $a_1 = a_2 = \ldots = a_n$ the treap will
 degenerate into a tree of depth $n$, or a linked-list. This is the problem that
-we will address by using SeqHash in \S\ref{s:seqhash}.
+we will address by using SeqHash. % in \S\ref{s:seqhash}.
 
-\paragraph{An aside: A handwavy argument as to why we need randomness for
-history-independent balanced binary trees.} I believe that we need
-pseudo-random functions to construct performant balanced binary trees that
-support efficient merging. Why? Well, we must somehow pick a node in the tree
-to be the root node. Picking the root node according to index is going to be
-problematic, as prepending a new value changes all other value's indices.
-Picking the root node according to value (say, maximum) is tricky as well, as
-values might very well exhibit patterns that lead to an unbalanced tree; for
-example, they might be linearly increasing.  Somehow, we need to pick a
-``nicely average'' node to be the root, and it seems that the ideal way to
-determine that is by appealing to a (pseudo-)random oracle.
+%\paragraph{An aside: An intuitive argument explaining why history-independent
+%balanced binary trees need randomness.} I believe that we need (pseudo-)random
+%functions to construct performant balanced binary trees that support efficient
+%merging. Why? Well, we must somehow pick a node in the tree to be the root
+%node. Picking the root node according to index is going to be problematic, as
+%prepending a new value changes all other value's indices.  Picking the root
+%node according to value (say, maximum) is tricky as well, as values might very
+%well exhibit patterns that lead to an unbalanced tree; for example, they might
+%be linearly increasing.  Somehow, we need to pick a ``nicely average'' node to
+%be the root, and it seems that the ideal way to determine that is by appealing
+%to a (pseudo-)random oracle.

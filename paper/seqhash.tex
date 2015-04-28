@@ -1,15 +1,77 @@
+\section{SeqHash}
+\label{s:background}
+
+The SeqHash tree~\cite{versum:ccs14} is a derandomized history-independent
+balanced binary tree. %The main design difference between SeqHash and the treap
+%is that SeqHash uses it source of randomness over and over again where the
+%treap associates only a single priority with each node. 
+The shape of a SeqHash is defined by construction. At a high level, SeqHash
+builds a tree level by level, and follows a merging process at each level
+to determine which nodes in each level should be combined into a new node.
+This section describes the construction in detail.
+
+The first level of a SeqHash consists of leaf nodes with all the values in the
+SeqHash in their original order.  Those leafs are merged to form the second
+level of the SeqHash, and those nodes get merged again to form the third level,
+and so forth. This process continues until all nodes have been merged and a
+single root node remains on the final level.
+
+%Not all nodes get merged each level; unmerged nodes pass through
+%to the next level and might get merged there. The merging process continues
+%until all nodes have been merged, and the tree ends with a single root on the
+%last level.
+
+To determine which nodes to merge on a single level, SeqHash follows merging
+process based on nodes generating pseudorandom bits. Each node's hash is used
+to seed a generator, creating a stream of bits coming out of each node.  To
+merge nodes, SeqHash performs a bit-by-bit process: First, we sample a new bit
+from each node's generator, so that each node has either a 0-bit or a 1-bit
+attached. Then, we consider adjacent pairs of nodes.  Whenever the node on the
+left generates a 1-bit, and the node on the right generates a 0-bit, we merge
+the two nodes and create a new node with the two existing nodes as children.
+This new node takes their place in the next level. Requiring a 1-bit on one
+side and a 0-bit on the other side ensures that the merging is well defined,
+and that there is only one possible interpretation of the merging rule.
+
+After merging two nodes, the merged nodes are no longer considered for the
+remainder of the level. The merging continues until merging is no longer possible.
+Some nodes might remain unmerged, but can also not merge anymore because both
+of their neighbors have been merged with their other neighbors. Such individual
+nodes pass through and become part of the next level, and have another chance
+to merge on that level.
+
+Because a level ends only once no pairs of adjacent nodes remain unmerged,
+at least $2/3$ of the nodes on each level must merge. That means that
+the total number of nodes decreases by $1/3$ each level, and so the total
+height of the tree is bound by $O(\log n)$.
+
+Intuitively, each level will only consume a limited number of bits. Consider
+any pairs of adjacent nodes. For every bit generated, that pair of nodes will
+merge with probability $1/4$ (if they have not already merged yet), and so the
+expected number of bits generated is 4 and with high probability the nodes
+merge after $O(1)$ bits. By applying the union bound, each level ends after
+$O(n)$ bits with high probability.
+
+Like the treap, SeqHash's shape is defined locally: Two adjacent nodes that
+generate a 1-bit and a 0-bit for their first bit will merge no matter what the
+other nodes generate. This means that we can \emph{partially evaluate} the
+SeqHash construction for a subsequence, and later on combine the partially
+evaluated SeqHash with another partially evaluated SeqHash to construct a
+SeqHash for the combined sequence. To compute this partial evaluation, the
+construction process is expanded to consider two potential unknown values at
+the beginning and end of the input sequence. Whenever a node might merge with
+those unknown values, that node itself is marked as unknown as well.  The final
+output of a partial evaluation is the set of unknown nodes along with the
+single root node on the final level.
+
 \section{A SeqHash-based associative hash function}
 \label{s:seqhash}
 
-\subsection{SeqHash}
-
-The SeqHash tree~\cite{versum:ccs14} is a history-independent balanced binary
-tree designed to 
-
-
-to 
-
-The problem.
+To build an associative hash function on top of SeqHash, we need a fringe.
+SeqHash's partial evaluation is the perfect basis for a fringe. All nodes that
+are not unknown nodes will never merge with another node, and so we need not
+store them for use in the fringe. Instead, we store only the unknown nodes, and
+the root node of the SeqHash.
 
 Examples.
 
